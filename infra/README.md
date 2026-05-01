@@ -48,3 +48,5 @@ Examples in use today:
 
 This convention is what makes per-stack IAM scoping work — each role's S3
 permission is restricted to its own prefix.
+
+< OIDC bootstrap verified 2026-05-01 -->
