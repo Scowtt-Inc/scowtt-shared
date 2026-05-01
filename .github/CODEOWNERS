@@ -1,0 +1,24 @@
+# Every PR that touches infra is gated by an explicit reviewer.
+# Branch protection (Settings → Branches → main) must be configured to
+# "Require review from Code Owners" for these to be enforced.
+
+# ----- Bootstrap (highest blast radius) -----
+infra/bootstrap/                          @Scowtt-Inc/platform-admins
+.github/workflows/                        @Scowtt-Inc/platform-admins
+.github/CODEOWNERS                        @Scowtt-Inc/platform-admins
+
+# ----- Per-platform module ownership -----
+infra/modules/aws/                        @Scowtt-Inc/aws-leads
+infra/modules/gcp/                        @Scowtt-Inc/gcp-leads
+infra/modules/google-workspace/           @Scowtt-Inc/workspace-admins
+infra/modules/keeper/                     @Scowtt-Inc/security-leads
+
+# ----- Per-stack ownership -----
+infra/stacks/aws/                         @Scowtt-Inc/aws-leads
+infra/stacks/gcp/                         @Scowtt-Inc/gcp-leads
+infra/stacks/google-workspace/            @Scowtt-Inc/workspace-admins
+infra/stacks/keeper/                      @Scowtt-Inc/security-leads
+
+# Tenant onboarding files — broader review allowed (one team has to be on the
+# PR but any infra-engineer can author it). Override above by being explicit.
+infra/stacks/aws/datasync/tenants/        @Scowtt-Inc/aws-leads @Scowtt-Inc/platform-admins

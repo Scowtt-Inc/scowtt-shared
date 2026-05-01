@@ -1,0 +1,3 @@
+aws_region            = "us-east-1"
+state_bucket_name     = "scowtt-tfstate-prod"   # GLOBALLY UNIQUE — pick something Scowtt-y
+state_lock_table_name = "scowtt-tfstate-locks"

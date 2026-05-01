@@ -1,0 +1,7 @@
+tenant_id               = "test-deleteme3"
+environment             = "dev"
+
+gcp_project_id          = "test-deleteme3-scowtt"
+gcp_region              = "US"
+destination_bucket_name = "test-deleteme3-scowtt-crm-sync"
+create_bucket           = true
