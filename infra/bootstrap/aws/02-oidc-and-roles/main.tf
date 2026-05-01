@@ -249,19 +249,10 @@ data "aws_iam_policy_document" "datasync_write" {
     resources = ["*"]
   }
 
-  statement {
-    sid    = "ReadSourceBucket"
-    effect = "Allow"
-    actions = [
-      "s3:GetBucketLocation",
-      "s3:ListBucket",
-      "s3:GetObject",
-    ]
-    resources = [
-      var.source_s3_bucket_arn,
-      "${var.source_s3_bucket_arn}/*",
-    ]
-  }
+  # Source-bucket S3 read access intentionally lives in the auto-generated
+  # source IAM role created per-tenant by modules/aws/datasync-s3-to-gcs.
+  # The deployer role doesn't read the source bucket directly — it just
+  # creates DataSync resources via the DataSync API.
 
   statement {
     sid    = "ManageDataSyncHmacSecrets"

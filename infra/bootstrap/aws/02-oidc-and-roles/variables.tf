@@ -29,12 +29,6 @@ variable "state_lock_table_name" {
   type        = string
 }
 
-variable "source_s3_bucket_arn" {
-  description = "ARN of the source S3 bucket DataSync reads from."
-  type        = string
-  default     = "arn:aws:s3:::scowtt-crm-data-bucket-dev"
-}
-
 variable "tags" {
   type = map(string)
   default = {

@@ -4,4 +4,3 @@ github_repo           = "scowtt-shared"
 github_owner_id       = "234455082"                  # gh api orgs/Scowtt-Inc -q .id  (verify before applying)
 state_bucket_name     = "scowtt-tfstate-prod"
 state_lock_table_name = "scowtt-tfstate-locks"
-source_s3_bucket_arn  = "arn:aws:s3:::scowtt-crm-data-bucket-dev"
