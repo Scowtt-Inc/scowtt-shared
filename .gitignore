@@ -1,0 +1,35 @@
+# OpenTofu / Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+# Per-stack tfvars and backend configs are committed — they hold no secrets.
+!infra/stacks/**/terraform.tfvars
+!infra/stacks/**/backend.hcl
+!infra/bootstrap/**/terraform.tfvars
+!infra/bootstrap/**/backend.hcl
+crash.log
+crash.*.log
+.terraform.lock.hcl.bak
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.tofurc
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Secrets — must never land in git
+*.pem
+*.key
+*-credentials.json
+secrets/
+.env
+.envrc

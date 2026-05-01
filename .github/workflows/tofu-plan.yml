@@ -1,0 +1,114 @@
+name: tofu-plan
+
+on:
+  pull_request:
+    paths:
+      - "infra/modules/aws/**"
+      - "infra/stacks/aws/**"
+      - "infra/bootstrap/aws/**"
+      - ".github/workflows/tofu-plan.yml"
+      - ".github/workflows/tofu-apply.yml"
+
+# Top-level: deny everything by default; jobs opt back in for what they need.
+permissions: {}
+
+concurrency:
+  group: tofu-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Discover which DataSync tenants changed (or all, if a shared file changed).
+  # ---------------------------------------------------------------------------
+  discover:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tenants: ${{ steps.set.outputs.tenants }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: set
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          changed=$(git diff --name-only "$base" "$head")
+
+          if echo "$changed" | grep -qE '^(infra/modules/aws/|infra/bootstrap/aws/|\.github/)'; then
+            mapfile -t tenants < <(find infra/stacks/aws/datasync/tenants -mindepth 1 -maxdepth 1 -type d ! -name '_template' -printf '%f\n' | sort)
+          else
+            mapfile -t tenants < <(echo "$changed" | grep -E '^infra/stacks/aws/datasync/tenants/[^/]+/' | awk -F/ '$6!="_template"{print $6}' | sort -u)
+          fi
+
+          if [ "${#tenants[@]}" -eq 0 ]; then
+            echo "tenants=[]" >> "$GITHUB_OUTPUT"
+          else
+            json=$(printf '%s\n' "${tenants[@]}" | jq -R . | jq -sc .)
+            echo "tenants=$json" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Affected tenants: ${tenants[*]:-<none>}"
+
+  # ---------------------------------------------------------------------------
+  # Plan each tenant in parallel using the *read-only* PR role.
+  # The role's trust policy only fires on pull_request events, and its
+  # permissions can't mutate AWS — even a malicious PR can only read.
+  # ---------------------------------------------------------------------------
+  plan-tenant:
+    needs: discover
+    if: needs.discover.outputs.tenants != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write    # mint the OIDC token
+      contents: read     # checkout
+      pull-requests: write   # comment plan summary
+    strategy:
+      fail-fast: false
+      matrix:
+        tenant: ${{ fromJson(needs.discover.outputs.tenants) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC, read-only PR role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_PR_PLAN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-pr-plan-${{ matrix.tenant }}-${{ github.run_id }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.5
+
+      - name: tofu fmt -check (whole repo)
+        run: tofu fmt -check -recursive infra/
+
+      - name: tofu init
+        working-directory: infra/stacks/aws/datasync/tenants/${{ matrix.tenant }}
+        run: tofu init -input=false -backend-config=backend.hcl
+
+      - name: tofu validate
+        working-directory: infra/stacks/aws/datasync/tenants/${{ matrix.tenant }}
+        run: tofu validate
+
+      - name: tofu plan
+        working-directory: infra/stacks/aws/datasync/tenants/${{ matrix.tenant }}
+        run: |
+          tofu plan -input=false -no-color -out=tfplan | tee plan.txt
+          {
+            echo '### tofu plan — `${{ matrix.tenant }}`'
+            echo '```hcl'
+            tail -c 60000 plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.tenant }}
+          path: infra/stacks/aws/datasync/tenants/${{ matrix.tenant }}/tfplan
+          retention-days: 7

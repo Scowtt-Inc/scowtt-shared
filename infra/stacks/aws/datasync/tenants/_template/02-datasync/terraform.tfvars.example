@@ -1,0 +1,6 @@
+tenant_id               = "test-deleteme3"
+environment             = "dev"
+
+source_s3_bucket_arn    = "arn:aws:s3:::scowtt-crm-data-bucket-dev"
+destination_bucket_name = "test-deleteme3-scowtt-crm-sync"   # output of 01-gcp-target
+hmac_secret_name        = "datasync/test-deleteme3/gcs-hmac" # output of 01-gcp-target
