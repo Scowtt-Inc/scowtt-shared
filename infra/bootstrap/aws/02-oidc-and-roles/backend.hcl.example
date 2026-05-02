@@ -1,5 +1,0 @@
-bucket         = "scowtt-tfstate-prod"
-key            = "aws/bootstrap/02-oidc-and-roles/terraform.tfstate"
-region         = "us-east-1"
-dynamodb_table = "scowtt-tfstate-locks"
-encrypt        = true
