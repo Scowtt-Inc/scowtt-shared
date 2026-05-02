@@ -1,8 +1,0 @@
-# After the first apply, copy this file to backend.hcl and run
-# `tofu init -migrate-state -backend-config=backend.hcl` so this stack's own
-# state moves into the bucket it just created.
-bucket         = "scowtt-tfstate-prod"
-key            = "aws/bootstrap/01-state-backend/terraform.tfstate"
-region         = "us-east-1"
-dynamodb_table = "scowtt-tfstate-locks"
-encrypt        = true
